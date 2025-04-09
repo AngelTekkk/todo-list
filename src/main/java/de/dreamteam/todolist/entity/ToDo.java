@@ -2,19 +2,23 @@ package de.dreamteam.todolist.entity;
 
 import de.dreamteam.todolist.model.ToDoStatus;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
 @Entity
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 @Table(name = "todo")
 public class ToDo {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     private Long id;
 
@@ -34,21 +38,13 @@ public class ToDo {
     @Enumerated(EnumType.STRING)
     private ToDoStatus status;
 
-    // TODO Bitte den nachfolgenden Haufen Scheiße auf Richtigkeit prüfen
+    @ManyToOne
+    @JoinColumn(name = "project_id")
+    private Project project;
 
-//    @ManyToOne
-//    @JoinColumn(name = "project_id")
-//    private Project project = new Project();
-//
-//    @ManyToMany
-//    @JoinTable(
-//            name = "curriculum_todo",
-//            joinColumns = @JoinColumn(name = "toDo_id"),
-//            inverseJoinColumns = @JoinColumn(name = "curriculum_id")
-//    )
-//    private List<Curriculum> curriculumList = new ArrayList<>();
-//
-//
-//    @ManyToMany
-//    private List<User> userList = new ArrayList<>();
+    @OneToMany(mappedBy = "toDo")
+    private List<ToDoCurriculum> toDoCurriculumList = new ArrayList<>();
+
+    @ManyToMany
+    private List<User> userList = new ArrayList<>();
 }

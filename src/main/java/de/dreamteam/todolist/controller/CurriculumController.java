@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/curriculum")
+@RequestMapping("/todo-list-api/curriculum")
 public class CurriculumController {
 
     private final CurriculumService curriculumService;

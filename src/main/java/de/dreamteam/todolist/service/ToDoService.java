@@ -2,7 +2,10 @@ package de.dreamteam.todolist.service;
 
 
 import de.dreamteam.todolist.controller.payload.NewToDoPayload;
+import de.dreamteam.todolist.controller.payload.UpdateToDoPayload;
+import de.dreamteam.todolist.entity.Project;
 import de.dreamteam.todolist.entity.ToDo;
+import de.dreamteam.todolist.repository.ProjectRepository;
 import de.dreamteam.todolist.repository.ToDoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -15,13 +18,24 @@ public class ToDoService {
     @Autowired
     private ToDoRepository toDoRepository;
 
-    public ToDo createToDo(NewToDoPayload newToDoPayload) {
-        ToDo toDo = new ToDo();
-        toDo.setTitle(newToDoPayload.title());
-        toDo.setDescription(newToDoPayload.description());
-        toDo.setEndDate(newToDoPayload.endDate());
-        toDo.setStartDate(newToDoPayload.startDate());
-        toDo.setStatus(newToDoPayload.status());
+    @Autowired
+    private ProjectRepository projectRepository;
+
+    public ToDo createToDo(NewToDoPayload payload) {
+        ToDo toDo = ToDo.builder()
+                .title(payload.title())
+                .description(payload.description())
+                .endDate(payload.endDate())
+                .startDate(payload.startDate())
+                .status(payload.status())
+                .project(payload.project())
+                .toDoCurriculumList(payload.toDoCurriculumList())
+                .userList(payload.userList())
+                .build();
+        if (payload.project() != null) {
+            Project project = projectRepository.findById(payload.project().getId()).orElseThrow();
+            project.getToDos().add(toDo);
+        }
         return toDoRepository.save(toDo);
     }
 
@@ -29,14 +43,12 @@ public class ToDoService {
         return toDoRepository.findAll();
     }
 
-    public ToDo editToDo(NewToDoPayload editToDo, ToDo toDoToEdit) {
-        toDoToEdit.setTitle(editToDo.title());
-        toDoToEdit.setDescription(editToDo.description());
-        toDoToEdit.setEndDate(editToDo.endDate());
-        toDoToEdit.setStartDate(editToDo.startDate());
-        toDoToEdit.setStatus(editToDo.status());
-        return toDoRepository.save(toDoToEdit);
+    public ToDo updateToDo(UpdateToDoPayload payload, ToDo existingToDo) {
+        existingToDo.setTitle(payload.title());
+        existingToDo.setDescription(payload.description());
+        existingToDo.setEndDate(payload.endDate());
+        existingToDo.setStartDate(payload.startDate());
+        existingToDo.setStatus(payload.status());
+        return toDoRepository.save(existingToDo);
     }
-
-
 }
