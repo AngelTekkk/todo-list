@@ -28,9 +28,9 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-//                .csrf(AbstractHttpConfigurer::disable)
+                .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/todo-list-api/users", "/error", "/forgot-password", "/login").permitAll()
+                        .requestMatchers("/todo-list-api/**", "/error", "/forgot-password", "/login").permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
