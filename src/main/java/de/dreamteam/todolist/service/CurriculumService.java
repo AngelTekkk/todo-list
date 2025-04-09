@@ -35,9 +35,9 @@ public class CurriculumService {
     public Optional<Curriculum> updateCurriculum(Long id, Curriculum curriculumDetails) {
         return curriculumRepository.findById(id).map(existingCurriculum -> {
             existingCurriculum.setTitle(curriculumDetails.getTitle());
-            // Обновляем ассоциацию с пользователем, если требуется
+            // Aktualisieren der Benutzerzuordnung
             existingCurriculum.setUser(curriculumDetails.getUser());
-            // Если нужно обновить список toDoCurriculumList, добавьте соответствующую логику
+
             return curriculumRepository.save(existingCurriculum);
         });
     }

@@ -20,19 +20,19 @@ public class ToDoCurriculumService {
     private final CurriculumRepository curriculumRepository;
     private final ToDoRepository toDoRepository;
 
-    /**
-     * Добавляет задачу (ToDo) в учебный план (Curriculum) с указанными датами.
-     */
+
+    // Fügen Sie dem Lehrplan eine Aufgabe (ToDo) mit den angegebenen Daten hinzu.
+
     public ToDoCurriculum addToDoToCurriculum(Long curriculumId, Long toDoId, LocalDate startDate, LocalDate endDate) {
-        // Получаем Curriculum; если не найден, выбрасываем исключение
+        // Curriculum abrufen, wenn nicht gefunden, Ausnahme auslösen
         Curriculum curriculum = curriculumRepository.findById(curriculumId)
                 .orElseThrow(() -> new RuntimeException("Curriculum not found with id: " + curriculumId));
 
-        // Получаем ToDo; если не найден, выбрасываем исключение
+        // ToDo abrufen, wenn nicht gefunden, Ausnahme auslösen
         ToDo toDo = toDoRepository.findById(toDoId)
                 .orElseThrow(() -> new RuntimeException("ToDo not found with id: " + toDoId));
 
-        // Создаём ассоциацию между Curriculum и ToDo
+        // Erstellen Sie eine Assoziation zwischen Curriculum und ToDo
         ToDoCurriculum association = ToDoCurriculum.builder()
                 .curriculum(curriculum)
                 .toDo(toDo)
@@ -40,11 +40,11 @@ public class ToDoCurriculumService {
                 .endDate(endDate)
                 .build();
 
-        // Обновляем двусторонние связи (если это необходимо для логики приложения)
+        // Aktualisierung der bidirektionalen Kommunikation (falls für die Anwendungslogik erforderlich)
         curriculum.getToDoCurriculumList().add(association);
         toDo.getToDoCurriculumList().add(association);
 
-        // Сохраняем ассоциацию
+        // Speichern Sie die Assoziation
         return toDoCurriculumRepository.save(association);
     }
 

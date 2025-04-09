@@ -33,13 +33,13 @@ public class CurriculumController {
 
     @PostMapping
     public ResponseEntity<CurriculumResponse> createCurriculum(@Valid @RequestBody CurriculumRequest curriculumRequest) {
-        // Получаем пользователя по ID (предполагается, что UserService или UserRepository существует)
+        // Benutzer nach ID abrufen
         User user = userService.getUserById(curriculumRequest.userId());
         if (user == null) {
             throw new RuntimeException("User not found");
         }
 
-        // Создаём объект Curriculum
+        // Erstellen eines Curriculum-Objekts
         Curriculum curriculum = Curriculum.builder()
                 .title(curriculumRequest.title())
                 .user(user)
@@ -93,11 +93,11 @@ public class CurriculumController {
 
     @GetMapping("/{curriculumId}/todos")
     public ResponseEntity<List<ToDoCurriculumResponse>> getTasksForCurriculum(@PathVariable Long curriculumId) {
-        // Получаем учебный план по ID или выбрасываем исключение, если не найден
+        // Abrufen des Lehrplans anhand der ID oder Auslösen einer Ausnahme, wenn nicht gefunden
         Curriculum curriculum = curriculumService.getCurriculumById(curriculumId)
                 .orElseThrow(() -> new RuntimeException("Curriculum not found with id: " + curriculumId));
 
-        // Извлекаем список ассоциаций ToDoCurriculum
+        // Abrufen der ToDoCurriculum-Zuordnungsliste
         List<ToDoCurriculumResponse> responses = curriculum.getToDoCurriculumList().stream()
                 .map(association -> ToDoCurriculumResponse.builder()
                         .id(association.getId())
