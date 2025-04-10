@@ -1,6 +1,7 @@
 package de.dreamteam.todolist.controller;
 
 import de.dreamteam.todolist.controller.payload.NewToDoPayload;
+import de.dreamteam.todolist.controller.payload.UpdateToDoPayload;
 import de.dreamteam.todolist.entity.ToDo;
 import de.dreamteam.todolist.repository.ToDoRepository;
 import de.dreamteam.todolist.service.ToDoService;
@@ -31,16 +32,17 @@ public class ToDoRestController {
     }
 
     @PostMapping
-    public ResponseEntity<ToDo> createToDo(@Valid @RequestBody NewToDoPayload newToDoPayload) {
-        ToDo newToDo = toDoService.createToDo(newToDoPayload);
-        return ResponseEntity.status(HttpStatus.CREATED).body(newToDo);
+    public ResponseEntity<ToDo> createToDo(@Valid @RequestBody NewToDoPayload payload) {
+        ToDo newToDo = toDoService.createToDo(payload);
+
+        return ResponseEntity.status(HttpStatus.OK).body(newToDo);
     }
 
     @PatchMapping("{toDoId:\\d+}")
-    public ResponseEntity<ToDo> editToDo(@PathVariable Long toDoId, @Valid @RequestBody NewToDoPayload editToDo) {
+    public ResponseEntity<ToDo> updateToDo(@PathVariable Long toDoId, @Valid @RequestBody UpdateToDoPayload payload) {
         try {
-            ToDo toDoToEdit = toDoService.editToDo(editToDo, toDoRepository.findById(toDoId).get());
-            return ResponseEntity.status(HttpStatus.OK).body(toDoToEdit);
+            ToDo existingToDo = toDoService.updateToDo(payload, toDoRepository.findById(toDoId).get());
+            return ResponseEntity.status(HttpStatus.OK).body(existingToDo);
         } catch (Exception e) {
             throw new IllegalArgumentException(e);
         }

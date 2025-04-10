@@ -25,6 +25,7 @@ public class ProjectController {
     // Ein neues Projekt erstellen
     @PostMapping
     public ResponseEntity<ProjectResponse> createProject(@Valid @RequestBody ProjectRequest projectRequest) {
+        System.out.println("Create project");
         Project project = Project.builder()
                 .title(projectRequest.title())
                 .description(projectRequest.description())
