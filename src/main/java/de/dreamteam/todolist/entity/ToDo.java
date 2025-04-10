@@ -38,11 +38,12 @@ public class ToDo {
     @Enumerated(EnumType.STRING)
     private ToDoStatus status;
 
+    // TODO Bitte den nachfolgenden Haufen Scheiße auf Richtigkeit prüfen
     @ManyToOne
     @JoinColumn(name = "project_id")
     private Project project;
 
-    @OneToMany(mappedBy = "toDo")
+    @OneToMany(mappedBy = "toDo", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ToDoCurriculum> toDoCurriculumList = new ArrayList<>();
 
     @ManyToMany
