@@ -39,9 +39,11 @@ public record NewToDoPayload(
         ToDoStatus status,
 
         @Nullable
-        Project project,
+        Long projectId,
 
-        List<ToDoCurriculum> toDoCurriculumList,
+        @Nullable
+        List<Long> curriculumIds,
 
-        List<User> userList
+        @Nullable
+        List<Long> userIds
 ) {}

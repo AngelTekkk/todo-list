@@ -5,8 +5,10 @@ import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import org.springframework.lang.Nullable;
 
 import java.time.LocalDate;
+import java.util.List;
 
 public record UpdateToDoPayload(
 
@@ -18,13 +20,19 @@ public record UpdateToDoPayload(
         @Size(min = 5, max = 255)
         String description,
 
-        //TODO prüfen, weil beim Update ein ToDo startDate in der Vergangenheit liegt
         @FutureOrPresent
         LocalDate endDate,
 
         LocalDate startDate,
 
         @NotNull
-        ToDoStatus status
+        ToDoStatus status,
+
+        @Nullable
+        Long projectId,
+
+        List<Long> curriculumIds,
+
+        List<Long> userIds
 ) {
 }
