@@ -32,17 +32,16 @@ public class ToDoRestController {
     }
 
     @PostMapping
-    public ResponseEntity<ToDo> createToDo(@Valid @RequestBody NewToDoPayload payload) {
-        ToDo newToDo = toDoService.createToDo(payload);
-
-        return ResponseEntity.status(HttpStatus.OK).body(newToDo);
+    public ResponseEntity<NewToDoPayload> createToDo(@Valid @RequestBody NewToDoPayload payload) {
+        toDoService.createToDo(payload);
+        return ResponseEntity.status(HttpStatus.OK).body(payload);
     }
 
     @PatchMapping("{toDoId:\\d+}")
-    public ResponseEntity<ToDo> updateToDo(@PathVariable Long toDoId, @Valid @RequestBody UpdateToDoPayload payload) {
+    public ResponseEntity<UpdateToDoPayload> updateToDo(@PathVariable Long toDoId, @Valid @RequestBody UpdateToDoPayload payload) {
         try {
-            ToDo existingToDo = toDoService.updateToDo(payload, toDoRepository.findById(toDoId).get());
-            return ResponseEntity.status(HttpStatus.OK).body(existingToDo);
+            toDoService.updateToDo(payload, toDoRepository.findById(toDoId).orElseThrow());
+            return ResponseEntity.status(HttpStatus.OK).body(payload);
         } catch (Exception e) {
             throw new IllegalArgumentException(e);
         }
@@ -52,5 +51,11 @@ public class ToDoRestController {
     public ResponseEntity<ToDo> deleteToDo(@PathVariable Long toDoToDeleteId) {
         toDoRepository.deleteById(toDoToDeleteId);
         return ResponseEntity.noContent().build();
+    }
+    @PatchMapping("{toDoId:\\d+}/assign/project/{projectId:\\d+}")
+    public ResponseEntity<ToDo> assignToProject(@PathVariable Long toDoId, @PathVariable Long projectId){
+        ToDo toDo = toDoRepository.findById(toDoId).orElseThrow();
+        toDoService.assignToProject(toDo, projectId);
+        return ResponseEntity.status(HttpStatus.OK).body(toDo);
     }
 }
