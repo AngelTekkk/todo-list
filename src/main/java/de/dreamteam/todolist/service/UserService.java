@@ -19,7 +19,6 @@ public class UserService {
 
     private final UserRepository userRepository;
 
-//    private final PasswordEncoder passwordEncoder;
 
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -43,11 +42,10 @@ public class UserService {
 
     public void updateUser(UpdateUserPayload payload) {
         String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
-        System.out.println(currentUsername);
         User existingUser = userRepository.findUserByUsername(currentUsername);
-//        if (existingUser == null) {
-//            return;
-//        }
+        if (existingUser == null) {
+            return;
+        }
 
         existingUser.setFirstName(payload.firstName());
         existingUser.setLastName(payload.lastName());
@@ -61,8 +59,14 @@ public class UserService {
         userRepository.save(existingUser);
     }
 
-    public void deleteUser(Long id) {
-        userRepository.deleteById(id);
+    public void deleteUser() {
+        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        User existingUser = userRepository.findUserByUsername(currentUsername);
+        if (existingUser == null) {
+            return;
+        }
+
+        userRepository.delete(existingUser);
     }
 
     public User findUserByUsername(String username) {
