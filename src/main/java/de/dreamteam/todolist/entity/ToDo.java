@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
@@ -36,19 +38,19 @@ public class ToDo {
 
     // TODO Bitte den nachfolgenden Haufen Scheiße auf Richtigkeit prüfen
 
-//    @ManyToOne
-//    @JoinColumn(name = "project_id")
-//    private Project project = new Project();
-//
-//    @ManyToMany
-//    @JoinTable(
-//            name = "curriculum_todo",
-//            joinColumns = @JoinColumn(name = "toDo_id"),
-//            inverseJoinColumns = @JoinColumn(name = "curriculum_id")
-//    )
-//    private List<Curriculum> curriculumList = new ArrayList<>();
-//
-//
-//    @ManyToMany
-//    private List<User> userList = new ArrayList<>();
+    @ManyToOne
+    @JoinColumn(name = "project_id")
+    private Project project = new Project();
+
+    @ManyToMany
+    @JoinTable(
+            name = "curriculum_todo",
+            joinColumns = @JoinColumn(name = "toDo_id"),
+            inverseJoinColumns = @JoinColumn(name = "curriculum_id")
+    )
+    private List<Curriculum> curriculumList = new ArrayList<>();
+
+
+    @ManyToMany
+    private List<User> userList = new ArrayList<>();
 }
