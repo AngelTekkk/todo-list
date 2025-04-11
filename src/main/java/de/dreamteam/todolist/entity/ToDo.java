@@ -43,7 +43,7 @@ public class ToDo {
     @JoinColumn(name = "project_id")
     private Project project;
 
-    @OneToMany(mappedBy = "toDo", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "toDo")
     private List<ToDoCurriculum> toDoCurriculumList = new ArrayList<>();
 
     @ManyToMany
