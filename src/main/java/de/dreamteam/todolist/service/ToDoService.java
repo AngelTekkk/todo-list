@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 public class ToDoService {
@@ -49,8 +50,23 @@ public class ToDoService {
         toDoRepository.save(toDo);
     }
 
-    public List<ToDo> getAllToDos() {
-        return toDoRepository.findAll();
+    public List<NewToDoPayload> getAllToDos() {
+//        return toDoRepository.findAll();
+        List<ToDo> allToDos = toDoRepository.findAll();
+        List<NewToDoPayload> payloads = new ArrayList<>();
+        allToDos.forEach(toDo -> {
+            NewToDoPayload newToDoPayload = new NewToDoPayload(
+                    toDo.getTitle(),
+                    toDo.getDescription(),
+                    toDo.getEndDate(),
+                    toDo.getStartDate(),
+                    toDo.getStatus(),
+                    toDo.getProject() != null ? toDo.getProject().getId() : null,
+                    toDo.getToDoCurriculumList().stream().map(toDoCurriculum -> toDoCurriculum.getCurriculum().getId()).collect(Collectors.toList()),
+                    toDo.getUserList().stream().map(user -> user.getId()).collect(Collectors.toList()));
+            payloads.add(newToDoPayload);
+        });
+        return payloads;
     }
 
     public void updateToDo(UpdateToDoPayload payload, ToDo existingToDo) {
@@ -62,6 +78,8 @@ public class ToDoService {
         if (payload.projectId() != null) {
             Project project = projectRepository.findById(payload.projectId()).orElseThrow();
             existingToDo.setProject(project);
+        } else {
+            existingToDo.setProject(null);
         }
         assignToCurriculum(existingToDo, payload);
         toDoRepository.save(existingToDo);
@@ -77,21 +95,31 @@ public class ToDoService {
     public void assignToCurriculum(ToDo existingToDo, UpdateToDoPayload payload) {
         List<ToDoCurriculum> existingToDoCurriculums = toDoCurriculumRepository.findAll();
 
-        if (payload.curriculumIds() != null) {
+        if (payload.curriculumIds() != null && !payload.curriculumIds().isEmpty()) {
+
             List<Curriculum> curriculums = curriculumRepository.findAllById(payload.curriculumIds());
             List<ToDoCurriculum> toDoCurriculumList = new ArrayList<>();
 
             for (Curriculum curriculum : curriculums) {
-                for (ToDoCurriculum existingToDoCurriculum : existingToDoCurriculums) {
-                    if (!Objects.equals(existingToDoCurriculum.getCurriculum().getId(), curriculum.getId())
-                            && !Objects.equals(existingToDoCurriculum.getToDo().getId(), existingToDo.getId())) {
 
-                        ToDoCurriculum toDoCurriculum = new ToDoCurriculum();
-                        toDoCurriculum.setToDo(existingToDo);
-                        toDoCurriculum.setCurriculum(curriculum);
-                        toDoCurriculumList.add(toDoCurriculum);
-                        toDoCurriculumRepository.save(toDoCurriculum);
-                    }
+                boolean tcAlreadyExists = existingToDoCurriculums.stream().anyMatch(toDoCurriculum ->
+                        Objects.equals(toDoCurriculum.getCurriculum().getId(), curriculum.getId()) &&
+                                Objects.equals(toDoCurriculum.getToDo().getId(), existingToDo.getId()));
+
+                if (!tcAlreadyExists) {
+
+                    ToDoCurriculum toDoCurriculum = new ToDoCurriculum();
+                    toDoCurriculum.setToDo(existingToDo);
+                    toDoCurriculum.setCurriculum(curriculum);
+                    toDoCurriculum.setStartDate(existingToDo.getStartDate());
+                    toDoCurriculum.setEndDate(existingToDo.getEndDate());
+                    toDoCurriculumList.add(toDoCurriculum);
+                    toDoCurriculumRepository.save(toDoCurriculum);
+                } else {
+                    List<ToDoCurriculum> toDelete = existingToDoCurriculums.stream().filter(toDoCurriculum ->
+                            Objects.equals(toDoCurriculum.getToDo().getId(), existingToDo.getId()) &&
+                                    !Objects.equals(toDoCurriculum.getCurriculum().getId(), curriculum.getId())).toList();
+                    toDoCurriculumRepository.deleteAll(toDelete);
                 }
             }
             existingToDo.setToDoCurriculumList(toDoCurriculumList);
