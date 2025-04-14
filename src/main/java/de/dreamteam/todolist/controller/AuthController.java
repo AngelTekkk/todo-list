@@ -1,6 +1,8 @@
 package de.dreamteam.todolist.controller;
 
+import de.dreamteam.todolist.controller.payload.ForgotPasswordPayload;
 import de.dreamteam.todolist.controller.payload.LoginPayload;
+import de.dreamteam.todolist.controller.payload.ResetPasswordPayload;
 import de.dreamteam.todolist.entity.User;
 import de.dreamteam.todolist.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -9,6 +11,7 @@ import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -103,5 +106,74 @@ public class AuthController {
                 "auth.logout.info.logout_is_successful", null, locale));
 
         return ResponseEntity.ok(responseBody);
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@Valid @RequestBody ForgotPasswordPayload payload, Locale locale) {
+        boolean success = userService.initiatePasswordReset(payload.email());
+
+        Map<String, String> response = new HashMap<>();
+        if (success) {
+            response.put("message", messageSource.getMessage(
+                    "auth.forgot.info.email_sent", null, locale));
+            return ResponseEntity.ok(response);
+        } else {
+            response.put("error", messageSource.getMessage(
+                    "auth.forgot.errors.too_many_attempts", null, locale));
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(response);
+        }
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@Valid @RequestBody ResetPasswordPayload payload, Locale locale) {
+        boolean success = userService.resetPassword(payload.token(), payload.password());
+
+        Map<String, String> response = new HashMap<>();
+        if (success) {
+            response.put("message", messageSource.getMessage(
+                    "auth.reset.info.password_reset_successful", null, locale));
+            return ResponseEntity.ok(response);
+        } else {
+            response.put("error", messageSource.getMessage(
+                    "auth.reset.errors.invalid_token", null, locale));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+    }
+
+    @GetMapping("/verify")
+    public ResponseEntity<?> verifyEmail(@RequestParam String token, Locale locale,
+                                         HttpServletRequest request,
+                                         HttpServletResponse response) {
+        boolean success = userService.verifyUser(token);
+
+        Map<String, String> responseBody = new HashMap<>();
+        if (success) {
+            SecurityContext context = SecurityContextHolder.getContext();
+            securityContextRepository.saveContext(context, request, response);
+
+            responseBody.put("message", messageSource.getMessage(
+                    "auth.verify.info.verification_successful", null, locale));
+            return ResponseEntity.ok(responseBody);
+        } else {
+            responseBody.put("error", messageSource.getMessage(
+                    "auth.verify.errors.invalid_token", null, locale));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseBody);
+        }
+    }
+
+    @GetMapping("/resend-verification-token")
+    public ResponseEntity<?> resendVerificationToken(@RequestParam String email, Locale locale) {
+        boolean success = userService.initiateVerificationTokenResend(email);
+
+        Map<String, String> response = new HashMap<>();
+        if (success) {
+            response.put("message", messageSource.getMessage(
+                    "auth.resend_verification_token.info.email_sent", null, locale));
+            return ResponseEntity.ok(response);
+        } else {
+            response.put("error", messageSource.getMessage(
+                    "auth.resend_verification_token.errors.too_many_attempts_or_token_expired", null, locale));
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(response);
+        }
     }
 }

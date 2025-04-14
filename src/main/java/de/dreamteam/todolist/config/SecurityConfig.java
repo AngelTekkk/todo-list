@@ -34,7 +34,6 @@ import java.util.Locale;
 public class SecurityConfig {
 
     private final UserService userService;
-
     private final MessageSource messageSource;
 
     @Bean
@@ -54,7 +53,11 @@ public class SecurityConfig {
 //                        .ignoringRequestMatchers("/todo-list-api/auth/login"))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, "/todo-list-api/users").permitAll()
-                        .requestMatchers("/todo-list-api/auth/login", "/error", "/todo-list-api/auth/forgot-password").permitAll()
+                        .requestMatchers("/todo-list-api/auth/login",
+                                         "/todo-list-api/auth/forgot-password",
+                                         "/todo-list-api/auth/reset-password",
+                                         "/todo-list-api/auth/verify",
+                                         "/error").permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
@@ -95,6 +98,9 @@ public class SecurityConfig {
             User user = userService.findUserByUsername(username);
             if (user == null) {
                 throw new UsernameNotFoundException("User wurde nicht gefunden: " + username);
+            }
+            if (!user.isEnabled()) {
+                throw new UsernameNotFoundException("Konto nicht aktiviert");
             }
             return org.springframework.security.core.userdetails.User
                     .withUsername(user.getUsername())
