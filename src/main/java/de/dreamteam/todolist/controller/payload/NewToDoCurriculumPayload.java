@@ -6,7 +6,7 @@ import lombok.Builder;
 import java.time.LocalDate;
 
 @Builder
-public record ToDoCurriculumRequest(
+public record NewToDoCurriculumPayload(
         @NotNull(message = "Die ToDo-ID darf nicht null sein.")
         Long todoId,
         @NotNull(message = "Das Startdatum darf nicht null sein.")

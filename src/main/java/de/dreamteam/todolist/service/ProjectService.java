@@ -1,24 +1,28 @@
 package de.dreamteam.todolist.service;
 
+import de.dreamteam.todolist.controller.payload.NewProjectPayload;
+import de.dreamteam.todolist.controller.payload.UpdateProjectPayload;
 import de.dreamteam.todolist.entity.Project;
 import de.dreamteam.todolist.repository.ProjectRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class ProjectService {
 
     private final ProjectRepository projectRepository;
 
-    // Constructor
-    public ProjectService(ProjectRepository projectRepository) {
-        this.projectRepository = projectRepository;
-    }
-
     // Ein neues Projekt erstellen
-    public Project createProject(Project project) {
+    public Project createProject(NewProjectPayload newPayload) {
+        Project project = Project.builder()
+                .title(newPayload.title())
+                .description(newPayload.description())
+                .build();
+
         return projectRepository.save(project);
     }
 
@@ -33,11 +37,11 @@ public class ProjectService {
     }
 
     // Projektdaten nach ID aktualisieren
-    public Optional<Project> updateProject(Long id, Project projectDetails) {
+    public Optional<Project> updateProject(Long id, UpdateProjectPayload updatePayload) {
         return projectRepository.findById(id).map(existingProject -> {
-            existingProject.setTitle(projectDetails.getTitle());
-            existingProject.setDescription(projectDetails.getDescription());
-            // Если требуется обновлять список задач, добавить логику здесь
+            // Hier findet die Zuordnung von DTO zu Entity statt:
+            existingProject.setTitle(updatePayload.title());
+            existingProject.setDescription(updatePayload.description());
             return projectRepository.save(existingProject);
         });
     }
@@ -46,7 +50,6 @@ public class ProjectService {
     public void deleteProject(Long id) {
         projectRepository.deleteById(id);
     }
-
 
 }
 

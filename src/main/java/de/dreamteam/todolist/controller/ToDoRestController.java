@@ -32,16 +32,16 @@ public class ToDoRestController {
     }
 
     @PostMapping
-    public ResponseEntity<NewToDoPayload> createToDo(@Valid @RequestBody NewToDoPayload payload) {
-        toDoService.createToDo(payload);
-        return ResponseEntity.status(HttpStatus.OK).body(payload);
+    public ResponseEntity<NewToDoPayload> createToDo(@Valid @RequestBody NewToDoPayload newPayload) {
+        toDoService.createToDo(newPayload);
+        return ResponseEntity.status(HttpStatus.OK).body(newPayload);
     }
 
     @PatchMapping("{toDoId:\\d+}")
-    public ResponseEntity<UpdateToDoPayload> updateToDo(@PathVariable Long toDoId, @Valid @RequestBody UpdateToDoPayload payload) {
+    public ResponseEntity<UpdateToDoPayload> updateToDo(@PathVariable Long toDoId, @Valid @RequestBody UpdateToDoPayload updatePayload) {
         try {
-            toDoService.updateToDo(payload, toDoRepository.findById(toDoId).orElseThrow());
-            return ResponseEntity.status(HttpStatus.OK).body(payload);
+            toDoService.updateToDo(updatePayload, toDoRepository.findById(toDoId).orElseThrow());
+            return ResponseEntity.status(HttpStatus.OK).body(updatePayload);
         } catch (Exception e) {
             throw new IllegalArgumentException(e);
         }

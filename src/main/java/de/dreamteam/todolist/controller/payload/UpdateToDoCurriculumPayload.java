@@ -5,7 +5,7 @@ import lombok.Builder;
 import java.time.LocalDate;
 
 @Builder
-public record ToDoCurriculumResponse(
+public record UpdateToDoCurriculumPayload(
         Long id,
         Long curriculumId,
         Long todoId,
