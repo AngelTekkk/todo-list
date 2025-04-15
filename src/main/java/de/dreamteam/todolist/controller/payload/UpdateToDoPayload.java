@@ -8,6 +8,7 @@ import jakarta.validation.constraints.Size;
 import org.springframework.lang.Nullable;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 public record UpdateToDoPayload(
