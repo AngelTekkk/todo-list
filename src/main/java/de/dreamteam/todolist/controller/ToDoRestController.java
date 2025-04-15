@@ -23,7 +23,7 @@ public class ToDoRestController {
     private final ToDoRepository toDoRepository;
 
     @GetMapping
-    public List<ToDo> getAllToDos() {
+    public List<NewToDoPayload> getAllToDos() {
         try {
             return toDoService.getAllToDos();
         } catch (Exception e) {
@@ -52,10 +52,11 @@ public class ToDoRestController {
         toDoRepository.deleteById(toDoToDeleteId);
         return ResponseEntity.noContent().build();
     }
+
     @PatchMapping("{toDoId:\\d+}/assign/project/{projectId:\\d+}")
     public ResponseEntity<ToDo> assignToProject(@PathVariable Long toDoId, @PathVariable Long projectId){
         ToDo toDo = toDoRepository.findById(toDoId).orElseThrow();
         toDoService.assignToProject(toDo, projectId);
-        return ResponseEntity.status(HttpStatus.OK).body(toDo);
+        return ResponseEntity.noContent().build();
     }
 }

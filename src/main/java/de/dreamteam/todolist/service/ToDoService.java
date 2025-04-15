@@ -2,14 +2,12 @@ package de.dreamteam.todolist.service;
 
 import de.dreamteam.todolist.controller.payload.NewToDoPayload;
 import de.dreamteam.todolist.controller.payload.UpdateToDoPayload;
-import de.dreamteam.todolist.entity.Curriculum;
-import de.dreamteam.todolist.entity.Project;
-import de.dreamteam.todolist.entity.ToDo;
-import de.dreamteam.todolist.entity.ToDoCurriculum;
+import de.dreamteam.todolist.entity.*;
 import de.dreamteam.todolist.repository.CurriculumRepository;
 import de.dreamteam.todolist.repository.ProjectRepository;
 import de.dreamteam.todolist.repository.ToDoCurriculumRepository;
 import de.dreamteam.todolist.repository.ToDoRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -19,19 +17,13 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class ToDoService {
 
-    @Autowired
-    private ToDoRepository toDoRepository;
-
-    @Autowired
-    private ProjectRepository projectRepository;
-
-    @Autowired
-    private CurriculumRepository curriculumRepository;
-
-    @Autowired
-    private ToDoCurriculumRepository toDoCurriculumRepository;
+    private final ToDoRepository toDoRepository;
+    private final ProjectRepository projectRepository;
+    private final CurriculumRepository curriculumRepository;
+    private final ToDoCurriculumRepository toDoCurriculumRepository;
 
     public void createToDo(NewToDoPayload payload) {
         ToDo toDo = ToDo.builder()
@@ -51,7 +43,6 @@ public class ToDoService {
     }
 
     public List<NewToDoPayload> getAllToDos() {
-//        return toDoRepository.findAll();
         List<ToDo> allToDos = toDoRepository.findAll();
         List<NewToDoPayload> payloads = new ArrayList<>();
         allToDos.forEach(toDo -> {
@@ -63,7 +54,7 @@ public class ToDoService {
                     toDo.getStatus(),
                     toDo.getProject() != null ? toDo.getProject().getId() : null,
                     toDo.getToDoCurriculumList().stream().map(toDoCurriculum -> toDoCurriculum.getCurriculum().getId()).collect(Collectors.toList()),
-                    toDo.getUserList().stream().map(user -> user.getId()).collect(Collectors.toList()));
+                    toDo.getUserList().stream().map(User::getId).collect(Collectors.toList()));
             payloads.add(newToDoPayload);
         });
         return payloads;
