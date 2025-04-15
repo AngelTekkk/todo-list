@@ -21,7 +21,7 @@ public class ToDoCurriculumService {
     private final ToDoRepository toDoRepository;
 
 
-    // Fügen Sie dem Lehrplan eine Aufgabe (ToDo) mit den angegebenen Daten hinzu.
+    // Fügen Sie dem Lehrplan eine Aufgabe mit den angegebenen Daten hinzu.
 
     public ToDoCurriculum addToDoToCurriculum(Long curriculumId, Long toDoId, LocalDate startDate, LocalDate endDate) {
         // Curriculum abrufen, wenn nicht gefunden, Ausnahme auslösen
