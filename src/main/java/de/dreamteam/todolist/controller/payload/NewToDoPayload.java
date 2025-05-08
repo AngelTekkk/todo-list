@@ -42,8 +42,5 @@ public record NewToDoPayload(
         Long projectId,
 
         @Nullable
-        List<Long> curriculumIds,
-
-        @Nullable
-        List<Long> userIds
+        List<Long> curriculumIds
 ) {}

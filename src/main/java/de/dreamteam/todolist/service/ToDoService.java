@@ -1,5 +1,7 @@
 package de.dreamteam.todolist.service;
 
+
+import de.dreamteam.todolist.controller.AuthController;
 import de.dreamteam.todolist.controller.payload.NewToDoPayload;
 import de.dreamteam.todolist.controller.payload.UpdateToDoPayload;
 import de.dreamteam.todolist.entity.*;
@@ -9,10 +11,13 @@ import de.dreamteam.todolist.repository.ToDoCurriculumRepository;
 import de.dreamteam.todolist.repository.ToDoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -24,14 +29,21 @@ public class ToDoService {
     private final ProjectRepository projectRepository;
     private final CurriculumRepository curriculumRepository;
     private final ToDoCurriculumRepository toDoCurriculumRepository;
+    private final UserService userService;
 
     public void createToDo(NewToDoPayload payload) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Long userId = userService.findUserByUsername(authentication.getName()).getId();
+        List<User> users = new ArrayList<>();
+        users.add(userService.getUserById(userId));
+
         ToDo toDo = ToDo.builder()
                 .title(payload.title())
                 .description(payload.description())
                 .endDate(payload.endDate())
                 .startDate(payload.startDate())
                 .status(payload.status())
+                .userList(users)
                 .build();
 
         if (payload.projectId() != null) {
@@ -43,9 +55,20 @@ public class ToDoService {
     }
 
     public List<NewToDoPayload> getAllToDos() {
-        List<ToDo> allToDos = toDoRepository.findAll();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Long userId = userService.findUserByUsername(authentication.getName()).getId();
+
+        List<ToDo>allToDos = toDoRepository.findAll();
+        List<ToDo>userToDo = new ArrayList<>();
         List<NewToDoPayload> payloads = new ArrayList<>();
-        allToDos.forEach(toDo -> {
+
+        allToDos.forEach(toDo ->{
+            if (toDo.getUserList().stream().anyMatch(user -> user.getId().equals(userId))){
+                userToDo.add(toDo);
+            }
+        });
+
+        userToDo.forEach(toDo -> {
             NewToDoPayload newToDoPayload = new NewToDoPayload(
                     toDo.getTitle(),
                     toDo.getDescription(),
@@ -53,14 +76,33 @@ public class ToDoService {
                     toDo.getStartDate(),
                     toDo.getStatus(),
                     toDo.getProject() != null ? toDo.getProject().getId() : null,
-                    toDo.getToDoCurriculumList().stream().map(toDoCurriculum -> toDoCurriculum.getCurriculum().getId()).collect(Collectors.toList()),
-                    toDo.getUserList().stream().map(User::getId).collect(Collectors.toList()));
+                    toDo.getToDoCurriculumList().stream().map(toDoCurriculum -> toDoCurriculum.getCurriculum().getId()).collect(Collectors.toList())
+//                    , toDo.getUserList().stream().map(User::getId).collect(Collectors.toList())
+            );
             payloads.add(newToDoPayload);
         });
+
+//  !!! DAS HIER WAR DER CODE, UM ALLE TODOS ANZEIGEN ZU LASSEN !!!
+//        List<ToDo> allToDos = toDoRepository.findAll();
+//        List<NewToDoPayload> payloads = new ArrayList<>();
+//        allToDos.forEach(toDo -> {
+//            NewToDoPayload newToDoPayload = new NewToDoPayload(
+//                    toDo.getTitle(),
+//                    toDo.getDescription(),
+//                    toDo.getEndDate(),
+//                    toDo.getStartDate(),
+//                    toDo.getStatus(),
+//                    toDo.getProject() != null ? toDo.getProject().getId() : null,
+//                    toDo.getToDoCurriculumList().stream().map(toDoCurriculum -> toDoCurriculum.getCurriculum().getId()).collect(Collectors.toList()),
+//                    toDo.getUserList().stream().map(User::getId).collect(Collectors.toList()));
+//            payloads.add(newToDoPayload);
+//        });
+
         return payloads;
     }
 
     public void updateToDo(UpdateToDoPayload payload, ToDo existingToDo) {
+
         existingToDo.setTitle(payload.title());
         existingToDo.setDescription(payload.description());
         existingToDo.setEndDate(payload.endDate());
