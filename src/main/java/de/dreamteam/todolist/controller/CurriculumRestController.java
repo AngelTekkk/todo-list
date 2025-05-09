@@ -97,7 +97,6 @@ public class CurriculumRestController {
         }
     }
 
-
     @GetMapping("/todos")
     public ResponseEntity<List<UpdateToDoCurriculumPayload>> getTasksForCurriculum() {
         // Ermittelt den Lehrplan für den aktuellen Benutzer. Wenn nicht gefunden, wird eine Ausnahme ausgelöst.
