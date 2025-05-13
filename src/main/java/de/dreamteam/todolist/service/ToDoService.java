@@ -1,26 +1,29 @@
 package de.dreamteam.todolist.service;
 
 
-import de.dreamteam.todolist.controller.AuthController;
 import de.dreamteam.todolist.controller.payload.NewToDoPayload;
+import de.dreamteam.todolist.controller.payload.UpdateStatusPayload;
 import de.dreamteam.todolist.controller.payload.UpdateToDoPayload;
+import de.dreamteam.todolist.controller.payload.UserTodoPayload;
 import de.dreamteam.todolist.entity.*;
 import de.dreamteam.todolist.repository.CurriculumRepository;
 import de.dreamteam.todolist.repository.ProjectRepository;
 import de.dreamteam.todolist.repository.ToDoCurriculumRepository;
 import de.dreamteam.todolist.repository.ToDoRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
+import static java.util.stream.Collectors.toList;
+
+
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ToDoService {
@@ -38,6 +41,7 @@ public class ToDoService {
         users.add(userService.getUserById(userId));
 
         ToDo toDo = ToDo.builder()
+                .creator(userService.getUserById(userId).getUsername())
                 .title(payload.title())
                 .description(payload.description())
                 .endDate(payload.endDate())
@@ -54,60 +58,38 @@ public class ToDoService {
         toDoRepository.save(toDo);
     }
 
-    public List<NewToDoPayload> getAllToDos() {
+    public List<UserTodoPayload> getAllToDos() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Long userId = userService.findUserByUsername(authentication.getName()).getId();
 
-        List<ToDo>allToDos = toDoRepository.findAll();
-        List<ToDo>userToDo = new ArrayList<>();
-        List<NewToDoPayload> payloads = new ArrayList<>();
-
-        allToDos.forEach(toDo ->{
-            if (toDo.getUserList().stream().anyMatch(user -> user.getId().equals(userId))){
-                userToDo.add(toDo);
-            }
-        });
-
-        userToDo.forEach(toDo -> {
-            NewToDoPayload newToDoPayload = new NewToDoPayload(
-                    toDo.getTitle(),
-                    toDo.getDescription(),
-                    toDo.getEndDate(),
-                    toDo.getStartDate(),
-                    toDo.getStatus(),
-                    toDo.getProject() != null ? toDo.getProject().getId() : null,
-                    toDo.getToDoCurriculumList().stream().map(toDoCurriculum -> toDoCurriculum.getCurriculum().getId()).collect(Collectors.toList())
-//                    , toDo.getUserList().stream().map(User::getId).collect(Collectors.toList())
-            );
-            payloads.add(newToDoPayload);
-        });
-
-//  !!! DAS HIER WAR DER CODE, UM ALLE TODOS ANZEIGEN ZU LASSEN !!!
-//        List<ToDo> allToDos = toDoRepository.findAll();
-//        List<NewToDoPayload> payloads = new ArrayList<>();
-//        allToDos.forEach(toDo -> {
-//            NewToDoPayload newToDoPayload = new NewToDoPayload(
-//                    toDo.getTitle(),
-//                    toDo.getDescription(),
-//                    toDo.getEndDate(),
-//                    toDo.getStartDate(),
-//                    toDo.getStatus(),
-//                    toDo.getProject() != null ? toDo.getProject().getId() : null,
-//                    toDo.getToDoCurriculumList().stream().map(toDoCurriculum -> toDoCurriculum.getCurriculum().getId()).collect(Collectors.toList()),
-//                    toDo.getUserList().stream().map(User::getId).collect(Collectors.toList()));
-//            payloads.add(newToDoPayload);
-//        });
-
-        return payloads;
+        return toDoRepository.findAll()
+                .stream().filter(toDo -> toDo.getUserList().stream().anyMatch(user -> user.getId().equals(userId))).map(toDo ->
+                        new UserTodoPayload(
+                                toDo.getId(),
+                                toDo.getTitle(),
+                                toDo.getCreator(),
+                                toDo.getDescription(),
+                                toDo.getStartDate(),
+                                toDo.getEndDate(),
+                                toDo.getStatus(),
+                                toDo.getProject() != null ? toDo.getProject().getId() : null,
+                                toDo.getToDoCurriculumList().stream().map(toDoCurriculum -> toDoCurriculum.getCurriculum().getId()).collect(toList())
+                        )
+                ).toList();
     }
 
-    public void updateToDo(UpdateToDoPayload payload, ToDo existingToDo) {
 
-        existingToDo.setTitle(payload.title());
-        existingToDo.setDescription(payload.description());
-        existingToDo.setEndDate(payload.endDate());
-        existingToDo.setStartDate(payload.startDate());
-        existingToDo.setStatus(payload.status());
+
+
+    public void updateToDo(UpdateToDoPayload payload, Long todoId) {
+
+        ToDo existingToDo = toDoRepository.findById(todoId).orElseThrow();
+
+        existingToDo.setTitle(payload.title() != null ? payload.title() : existingToDo.getTitle());
+        existingToDo.setDescription(payload.description() != null ? payload.description() : existingToDo.getDescription());
+        existingToDo.setEndDate(payload.endDate() != null ? payload.endDate() : existingToDo.getEndDate());
+        existingToDo.setStartDate(payload.startDate() != null ? payload.startDate() : existingToDo.getStartDate());
+        existingToDo.setStatus(payload.status() != null ? payload.status() : existingToDo.getStatus());
         if (payload.projectId() != null) {
             Project project = projectRepository.findById(payload.projectId()).orElseThrow();
             existingToDo.setProject(project);
@@ -163,5 +145,15 @@ public class ToDoService {
             toDoCurriculumRepository.deleteAll(toDelete);
             existingToDo.setToDoCurriculumList(null);
         }
+    }
+
+    public void updateStatus(Long todoId, UpdateStatusPayload payload) {
+        ToDo todo = toDoRepository.findById(todoId).orElseThrow();
+        todo.setStatus(payload.status());
+        toDoRepository.save(todo);
+    }
+
+    public ToDo getToDo(Long todoId) {
+        return toDoRepository.findById(todoId).orElseThrow();
     }
 }

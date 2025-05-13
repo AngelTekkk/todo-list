@@ -25,6 +25,9 @@ public class ToDo {
     @Column(name = "title")
     private String title;
 
+    @Column(name = "creator")
+    private String creator;
+
     @Column(name = "description")
     private String description;
 
@@ -38,7 +41,6 @@ public class ToDo {
     @Enumerated(EnumType.STRING)
     private ToDoStatus status;
 
-    // TODO Bitte den nachfolgenden Haufen Scheiße auf Richtigkeit prüfen
     @ManyToOne
     @JoinColumn(name = "project_id")
     private Project project;
