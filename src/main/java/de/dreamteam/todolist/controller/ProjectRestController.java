@@ -4,13 +4,16 @@ import de.dreamteam.todolist.entity.Project;
 import de.dreamteam.todolist.controller.payload.NewProjectPayload;
 import de.dreamteam.todolist.controller.payload.UpdateProjectPayload;
 import de.dreamteam.todolist.service.ProjectService;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.nio.file.AccessDeniedException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -49,7 +52,7 @@ public class ProjectRestController {
     @GetMapping
     public ResponseEntity<Map<String, Object>> getAllProjects(Locale locale) {
         // Abrufen der Liste der Projekteinheiten vom Service
-        List<Project> projects = projectService.getAllProjects();
+        List<Project> projects = projectService.getAllProjectsForCurrentUser();
 
         // Umwandlung der Entitätsliste in eine DTO ProjectResponse-Liste
         List<UpdateProjectPayload> responseList = projects.stream()
@@ -74,83 +77,129 @@ public class ProjectRestController {
 
     // Abrufen eines Projekts nach ID
     @GetMapping("/{id}")
-    public ResponseEntity<?> getProjectById(@PathVariable Long id, Locale locale) {
-        Optional<Project> projectOpt = projectService.getProjectById(id);
-        if (projectOpt.isPresent()) {
-            Project project = projectOpt.get();
-            UpdateProjectPayload response = UpdateProjectPayload.builder()
+    public ResponseEntity<?> getProjectById(
+            @PathVariable Long id,
+            Locale locale
+    ) {
+        try {
+            Project project = projectService.getProjectByIdForCurrentUser(id);
+
+            UpdateProjectPayload dto = UpdateProjectPayload.builder()
                     .id(project.getId())
                     .title(project.getTitle())
                     .description(project.getDescription())
                     .build();
 
-            // Fügen Sie die Projekt-ID in die Nachricht ein
-            String successMessage = messageSource.getMessage("project.getById.success", new Object[]{project.getId()}, locale);
+            String successMessage = messageSource.getMessage(
+                    "project.getById.success",
+                    new Object[]{project.getId()},
+                    locale
+            );
 
-            Map<String, Object> responseMap = new HashMap<>();
-            responseMap.put("project", response);
-            responseMap.put("message", successMessage);
-
-            // Status 200 OK und Nachricht
-            return ResponseEntity.ok(responseMap);
-        } else {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.ok(Map.of(
+                    "project", dto,
+                    "message", successMessage
+            ));
+        }
+        catch (EntityNotFoundException ex) {
+            // 404 Not Found
+            String notFoundMsg = messageSource.getMessage(
+                    "project.not.found",
+                    new Object[]{id},
+                    locale
+            );
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", notFoundMsg));
+        }
+        catch (AccessDeniedException ex) {
+            // 403 Forbidden
+            String deniedMsg = messageSource.getMessage(
+                    "project.access.denied",
+                    null,
+                    locale
+            );
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("message", deniedMsg));
         }
     }
 
     // Aktualisierung des Projekts
     @PatchMapping("/{id}")
-    public ResponseEntity<?> updateProject(@PathVariable Long id,
-                                           @Valid @RequestBody UpdateProjectPayload updatePayload,
-                                           Locale locale) {
-        Optional<Project> updatedProjectOpt = projectService.updateProject(id, updatePayload);
-        if (updatedProjectOpt.isPresent()) {
-            Project updatedProject = updatedProjectOpt.get();
-            UpdateProjectPayload response  = UpdateProjectPayload.builder()
-                    .id(updatedProject.getId())
-                    .title(updatedProject.getTitle())
-                    .description(updatedProject.getDescription())
+    public ResponseEntity<?> updateProject(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateProjectPayload updatePayload,
+            Locale locale
+    ) {
+        try {
+            Project updated = projectService.updateProjectForCurrentUser(id, updatePayload);
+
+            UpdateProjectPayload dto = UpdateProjectPayload.builder()
+                    .id(updated.getId())
+                    .title(updated.getTitle())
+                    .description(updated.getDescription())
                     .build();
 
-            // Erhalten Sie eine lokalisierte Nachricht über die erfolgreiche Aktualisierung
-            String successMessage = messageSource.getMessage("project.update.success", null, locale);
+            String msg = messageSource.getMessage("project.update.success", null, locale);
+            return ResponseEntity.ok(Map.of(
+                    "project", dto,
+                    "message", msg
+            ));
+        }
+        catch (EntityNotFoundException ex) {
+            String notFound = messageSource.getMessage("project.not.found", new Object[]{id}, locale);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", notFound));
+        }
+        catch (AccessDeniedException ex) {
+            String denied = messageSource.getMessage("project.access.denied", null, locale);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("message", denied));
+        }
+    }
 
-            // Antwort, die das aktualisierte Objekt und eine Nachricht enthält
-            Map<String, Object> responseMap = new HashMap<>();
-            responseMap.put("project", response);
-            responseMap.put("message", successMessage);
-
-            // Status 200 OK zur Aktualisierung
-            return ResponseEntity.ok(responseMap);
-        } else {
-            return ResponseEntity.notFound().build();
+    @PostMapping("/{projectId}/invite/{userId}")
+    public ResponseEntity<Map<String, String>> inviteUser(
+            @PathVariable Long projectId,
+            @PathVariable Long userId,
+            Locale locale
+    ) {
+        try {
+            projectService.inviteUser(projectId, userId);
+            // Предполагаем, что в messages.properties есть ключ:
+            // project.invite.success=Пользователь с ID={1} приглашён в проект {0}
+            String message = messageSource.getMessage(
+                    "project.invite.success",
+                    new Object[]{ projectId, userId },
+                    locale
+            );
+            return ResponseEntity.ok(Map.of("message", message));
+        } catch (EntityNotFoundException ex) {
+            // если проект или пользователь не найден
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, ex.getMessage(), ex);
         }
     }
 
     // Löschung eines Projekts
     @DeleteMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> deleteProject(@PathVariable Long id, Locale locale) {
-        // Prüfen, ob das Projekt mit der angegebenen ID existiert
-        Optional<Project> projectOptional = projectService.getProjectById(id);
-        if (projectOptional.isEmpty()) {
-            String notFoundMessage = messageSource.getMessage("project.not.found", new Object[]{id}, locale);
-            Map<String, Object> responseMap = new HashMap<>();
-            responseMap.put("message", notFoundMessage);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(responseMap);
+    public ResponseEntity<?> deleteProject(
+            @PathVariable Long id,
+            Locale locale
+    ) {
+        try {
+            projectService.deleteProjectForCurrentUser(id);
+            String msg = messageSource.getMessage("project.delete.success", new Object[]{id}, locale);
+            return ResponseEntity.ok(Map.of("message", msg));
         }
-
-        // Wenn das Projekt gefunden hat, dann löschen es
-        projectService.deleteProject(id);
-
-        // Erhalten Sie eine lokalisierte Nachricht über die erfolgreiche Löschung
-        String successMessage = messageSource.getMessage("project.delete.success", new Object[]{id}, locale);
-
-        // Nachricht
-        Map<String, Object> responseMap = new HashMap<>();
-        responseMap.put("message", successMessage);
-
-        // Status 200 OK und Nachricht
-        return ResponseEntity.ok(responseMap);
+        catch (EntityNotFoundException ex) {
+            String notFound = messageSource.getMessage("project.not.found", new Object[]{id}, locale);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", notFound));
+        }
+        catch (AccessDeniedException ex) {
+            String denied = messageSource.getMessage("project.access.denied", null, locale);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("message", denied));
+        }
     }
 }
 
