@@ -23,10 +23,10 @@ public record NewToDoPayload(
         String description,
 
         @FutureOrPresent
-        LocalDate endDate,
+        LocalDate startDate,
 
         @FutureOrPresent
-        LocalDate startDate,
+        LocalDate endDate,
 
         @NotNull
         ToDoStatus status,

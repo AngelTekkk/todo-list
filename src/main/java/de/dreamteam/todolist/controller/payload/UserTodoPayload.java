@@ -16,9 +16,9 @@ public record UserTodoPayload(
 
         String description,
 
-        LocalDate endDate,
-
         LocalDate startDate,
+
+        LocalDate endDate,
 
         ToDoStatus status,
 
