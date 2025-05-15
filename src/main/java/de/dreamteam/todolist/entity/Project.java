@@ -38,7 +38,12 @@ public class Project {
     private Set<User> users = new HashSet<>();
 
     @Builder.Default
-    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(
+            mappedBy = "project",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.EAGER
+    )
     private List<ToDo> toDos = new ArrayList<>();
 }
 

@@ -74,6 +74,7 @@ public class SecurityConfig {
                                          "/todo-list-api/auth/verify",
                                          "/todo-list-api/auth/resend-verification-token",
                                          "/error").permitAll()
+
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
