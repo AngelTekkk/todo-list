@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.nio.file.AccessDeniedException;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -24,6 +25,15 @@ public class ProjectRestController {
 
     private final ProjectService projectService;
     private final MessageSource messageSource;
+
+    // DTO-обёртки
+    public record TaskDto(Long id, String title, LocalDate startDate, LocalDate endDate) {}
+    public record ProjectWithTasksDto(
+            Long id,
+            String title,
+            String description,
+            List<TaskDto> tasks
+    ) {}
 
     // Ein neues Projekt erstellen
     @PostMapping
@@ -51,28 +61,28 @@ public class ProjectRestController {
     // Abrufen einer Liste aller Projekte
     @GetMapping
     public ResponseEntity<Map<String, Object>> getAllProjects(Locale locale) {
-        // Abrufen der Liste der Projekteinheiten vom Service
         List<Project> projects = projectService.getAllProjectsForCurrentUser();
 
-        // Umwandlung der Entitätsliste in eine DTO ProjectResponse-Liste
-        List<UpdateProjectPayload> responseList = projects.stream()
-                .map(project -> UpdateProjectPayload.builder()
-                        .id(project.getId())
-                        .title(project.getTitle())
-                        .description(project.getDescription())
-                        .build())
-                .collect(Collectors.toList());
+        List<ProjectWithTasksDto> dtos = projects.stream()
+                .map(p -> {
+                    List<TaskDto> tasks = p.getToDos().stream()
+                            .map(t -> new TaskDto(t.getId(), t.getTitle(), t.getStartDate(), t.getEndDate()))
+                            .toList();
+                    return new ProjectWithTasksDto(
+                            p.getId(), p.getTitle(), p.getDescription(), tasks
+                    );
+                })
+                .toList();
 
-        String messageKey = projects.isEmpty() ? "project.getAll.empty" : "project.getAll.success";
-        String message = messageSource.getMessage(messageKey, null, locale);
+        String key = dtos.isEmpty()
+                ? "project.getAll.empty"
+                : "project.getAll.success";
+        String message = messageSource.getMessage(key, null, locale);
 
-        // Erstellen Sie eine Antwortkarte, die sowohl eine Liste von Projekten als auch eine Nachricht enthält
-        Map<String, Object> responseMap = new HashMap<>();
-        responseMap.put("projects", responseList);
-        responseMap.put("message", message);
-
-        // Status 200 OK und Nachricht
-        return ResponseEntity.ok(responseMap);
+        return ResponseEntity.ok(Map.of(
+                "projects", dtos,
+                "message",  message
+        ));
     }
 
     // Abrufen eines Projekts nach ID
@@ -82,27 +92,25 @@ public class ProjectRestController {
             Locale locale
     ) {
         try {
-            Project project = projectService.getProjectByIdForCurrentUser(id);
-
-            UpdateProjectPayload dto = UpdateProjectPayload.builder()
-                    .id(project.getId())
-                    .title(project.getTitle())
-                    .description(project.getDescription())
-                    .build();
+            Project p = projectService.getProjectByIdForCurrentUser(id);
+            List<TaskDto> tasks = p.getToDos().stream()
+                    .map(t -> new TaskDto(t.getId(), t.getTitle(), t.getStartDate(), t.getEndDate()))
+                    .toList();
+            ProjectWithTasksDto dto = new ProjectWithTasksDto(
+                    p.getId(), p.getTitle(), p.getDescription(), tasks
+            );
 
             String successMessage = messageSource.getMessage(
                     "project.getById.success",
-                    new Object[]{project.getId()},
+                    new Object[]{id},
                     locale
             );
-
             return ResponseEntity.ok(Map.of(
-                    "project", dto,
-                    "message", successMessage
+                    "project",  dto,
+                    "message",  successMessage
             ));
         }
         catch (EntityNotFoundException ex) {
-            // 404 Not Found
             String notFoundMsg = messageSource.getMessage(
                     "project.not.found",
                     new Object[]{id},
@@ -112,7 +120,6 @@ public class ProjectRestController {
                     .body(Map.of("message", notFoundMsg));
         }
         catch (AccessDeniedException ex) {
-            // 403 Forbidden
             String deniedMsg = messageSource.getMessage(
                     "project.access.denied",
                     null,
