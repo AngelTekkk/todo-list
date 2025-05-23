@@ -36,5 +36,6 @@ public record NewToDoPayload(
 
         @Nullable
         List<Long> curriculumIds
+
 ) {
 }
