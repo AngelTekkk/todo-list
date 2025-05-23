@@ -54,7 +54,8 @@ public class ToDoService {
             Project project = projectRepository.findById(payload.projectId()).orElseThrow();
             toDo.setProject(project);
         }
-
+        toDoRepository.save(toDo);
+        assignToCurriculum(toDo,payload.curriculumIds());
         toDoRepository.save(toDo);
     }
 
@@ -96,7 +97,7 @@ public class ToDoService {
         } else {
             existingToDo.setProject(null);
         }
-        assignToCurriculum(existingToDo, payload);
+        assignToCurriculum(existingToDo, payload.curriculumIds());
         toDoRepository.save(existingToDo);
     }
 
@@ -107,12 +108,14 @@ public class ToDoService {
         toDoRepository.save(toDo);
     }
 
-    public void assignToCurriculum(ToDo existingToDo, UpdateToDoPayload payload) {
+    public void assignToCurriculum(ToDo existingToDo,
+//                                   UpdateToDoPayload payload,
+                                   List<Long> curriculumIds) {
         List<ToDoCurriculum> existingToDoCurriculums = toDoCurriculumRepository.findAll();
 
-        if (payload.curriculumIds() != null && !payload.curriculumIds().isEmpty()) {
+        if (curriculumIds != null && !curriculumIds.isEmpty()) {
 
-            List<Curriculum> curriculums = curriculumRepository.findAllById(payload.curriculumIds());
+            List<Curriculum> curriculums = curriculumRepository.findAllById(curriculumIds);
             List<ToDoCurriculum> toDoCurriculumList = new ArrayList<>();
 
             for (Curriculum curriculum : curriculums) {
@@ -156,4 +159,5 @@ public class ToDoService {
     public ToDo getToDo(Long todoId) {
         return toDoRepository.findById(todoId).orElseThrow();
     }
+
 }
