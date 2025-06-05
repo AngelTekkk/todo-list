@@ -224,4 +224,5 @@ public class UserService {
         user.setVerificationAttempts(user.getVerificationAttempts() + 1);
         return true;
     }
+
 }

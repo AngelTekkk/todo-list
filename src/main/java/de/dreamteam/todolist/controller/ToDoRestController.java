@@ -63,9 +63,22 @@ public class ToDoRestController {
     }
 
     @PatchMapping("{toDoId:\\d+}/assign/project/{projectId:\\d+}")
-    public ResponseEntity<ToDo> assignToProject(@PathVariable Long toDoId, @PathVariable Long projectId){
+    public ResponseEntity<Void> assignToProject(
+            @PathVariable Long toDoId,
+            @PathVariable Long projectId
+    ) {
         ToDo toDo = toDoRepository.findById(toDoId).orElseThrow();
         toDoService.assignToProject(toDo, projectId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("{toDoId:\\d+}/assign/project/{projectId:\\d+}")
+    public ResponseEntity<Void> removeFromProject(
+            @PathVariable Long toDoId,
+            @PathVariable Long projectId
+    ) {
+        ToDo toDo = toDoRepository.findById(toDoId).orElseThrow();
+        toDoService.removeFromProject(toDo, projectId);
         return ResponseEntity.noContent().build();
     }
 

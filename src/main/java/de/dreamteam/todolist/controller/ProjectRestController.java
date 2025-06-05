@@ -4,6 +4,7 @@ import de.dreamteam.todolist.entity.Project;
 import de.dreamteam.todolist.controller.payload.NewProjectPayload;
 import de.dreamteam.todolist.controller.payload.UpdateProjectPayload;
 import de.dreamteam.todolist.service.ProjectService;
+import de.dreamteam.todolist.service.UserService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,7 @@ public class ProjectRestController {
 
     private final ProjectService projectService;
     private final MessageSource messageSource;
+    private final UserService userService;
 
     // DTO-обёртки
     public record TaskDto(Long id, String title, LocalDate startDate, LocalDate endDate) {}

@@ -41,9 +41,17 @@ public class ToDo {
     @Enumerated(EnumType.STRING)
     private ToDoStatus status;
 
-    @ManyToOne
-    @JoinColumn(name = "project_id")
-    private Project project;
+//    @ManyToOne
+//    @JoinColumn(name = "project_id")
+//    private Project project;
+
+    @ManyToMany
+    @JoinTable(
+            name = "project_todo",
+            joinColumns = @JoinColumn(name = "todo_id"),
+            inverseJoinColumns = @JoinColumn(name = "project_id")
+    )
+    private List<Project> projects = new ArrayList<>();
 
     @OneToMany(mappedBy = "toDo")
     private List<ToDoCurriculum> toDoCurriculumList = new ArrayList<>();
