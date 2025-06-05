@@ -52,10 +52,10 @@ public class ToDoService {
 
         if (payload.projectId() != null) {
             Project project = projectRepository.findById(payload.projectId()).orElseThrow();
-            toDo.setProject(project);
+            toDo.getProjects().add(project);
         }
         toDoRepository.save(toDo);
-        assignToCurriculum(toDo,payload.curriculumIds());
+        assignToCurriculum(toDo, payload.curriculumIds());
         toDoRepository.save(toDo);
     }
 
@@ -73,7 +73,9 @@ public class ToDoService {
                                 toDo.getStartDate(),
                                 toDo.getEndDate(),
                                 toDo.getStatus(),
-                                toDo.getProject() != null ? toDo.getProject().getId() : null,
+                                toDo.getProjects().isEmpty()
+                                        ? null
+                                        : toDo.getProjects().getFirst().getId(),
                                 toDo.getToDoCurriculumList().stream().map(toDoCurriculum -> toDoCurriculum.getCurriculum().getId()).collect(toList())
                         )
                 ).toList();
@@ -93,19 +95,32 @@ public class ToDoService {
         existingToDo.setStatus(payload.status() != null ? payload.status() : existingToDo.getStatus());
         if (payload.projectId() != null) {
             Project project = projectRepository.findById(payload.projectId()).orElseThrow();
-            existingToDo.setProject(project);
+            if (!existingToDo.getProjects().contains(project)) {
+                existingToDo.getProjects().add(project);
+            }
         } else {
-            existingToDo.setProject(null);
+            existingToDo.getProjects().clear();
         }
+
         assignToCurriculum(existingToDo, payload.curriculumIds());
         toDoRepository.save(existingToDo);
     }
 
     public void assignToProject(ToDo toDo, Long projectId) {
-        Project project = projectRepository.findById(projectId).orElseThrow();
-        project.getToDos().add(toDo);
-        toDo.setProject(project);
-        toDoRepository.save(toDo);
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new IllegalArgumentException("Project not found"));
+        if (!toDo.getProjects().contains(project)) {
+            toDo.getProjects().add(project);
+            toDoRepository.save(toDo);
+        }
+    }
+
+    public void removeFromProject(ToDo toDo, Long projectId) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new IllegalArgumentException("Project not found"));
+        if (toDo.getProjects().remove(project)) {
+            toDoRepository.save(toDo);
+        }
     }
 
     public void assignToCurriculum(ToDo existingToDo,

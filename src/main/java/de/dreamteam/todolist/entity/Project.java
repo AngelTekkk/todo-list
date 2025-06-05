@@ -37,13 +37,17 @@ public class Project {
     )
     private Set<User> users = new HashSet<>();
 
-    @Builder.Default
-    @OneToMany(
-            mappedBy = "project",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true,
-            fetch = FetchType.EAGER
-    )
+//    @Builder.Default
+//    @OneToMany(
+//            mappedBy = "project",
+//            cascade = CascadeType.ALL,
+//            orphanRemoval = true,
+//            fetch = FetchType.EAGER
+//    )
+//    private List<ToDo> toDos = new ArrayList<>();
+
+    // Двунаправленная ManyToMany (mappedBy = "projects" в ToDo)
+    @ManyToMany(mappedBy = "projects")
     private List<ToDo> toDos = new ArrayList<>();
 }
 
